@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="mainfest" href="mainfest.json">
+    <title>Document</title>
+</head>
+
+<body>
+    <h1 id="candidateName"></h1>
+    <form id="form">
+
+        <button type="submit">Pay me</button>
+    </form>
+    <pre> <code id="receipt"></code></pre>
+</body>
+<script src="web3.min.js"></script>
+<script>
+    // initialize web3 using the given provider
+    if (typeof web3 !== 'undefined') {
+        web3 = new Web3(web3.currentProvider);
+        window.ethereum.enable();
+    } else {
+        console.log('No web3? You should consider trying MetaMask!')
+    }
+    // declare firstAccount
+    var firstAccount;
+    //  get all accounts
+    web3.eth.getAccounts().then(e => {
+        firstAccount = e[0];
+        console.log("A: " + firstAccount);
+    })
+    // xinpay address
+    var contractAddress = "0xE498528B0FB39dfC821dF0A4599D4d80460a28ff";
+
+
+
+    // abi of the contract
+    var contractABI =
+        [
+            {
+                "anonymous": false,
+                "inputs": [
+                    {
+                        "indexed": false,
+                        "internalType": "address",
+                        "name": "sender",
+                        "type": "address"
+                    },
+                    {
+                        "indexed": false,
+                        "internalType": "uint256",
+                        "name": "amount",
+                        "type": "uint256"
+                    }
+                ],
+                "name": "Payed",
+                "type": "event"
+            },
+            {
+                "inputs": [],
+                "name": "payme",
+                "outputs": [],
+                "stateMutability": "payable",
+                "type": "function"
+            }
+        ]
+
+
+    // set,initialize the contract
+    var contract = new web3.eth.Contract(contractABI,
+        contractAddress,
+        { from: firstAccount });
+
+    // web3.currentProvider.publicConfigStore.on('update', function (e) {
+    //     console.log(e);
+    //     web3.eth.getAccounts().then(e => {
+    //         firstAccount = e[0];
+    //         console.log("A: " + firstAccount);
+    //     })
+    // });
+
+    const RECEIPT_POLLING_INTERVAL = 1000;
+    const RECEIPT_POLLING_MAX_ATTEMPTS = 10;
+
+    const getTransactionReceipt = async (hash) => {
+
+
+        let pollingAttemptsCount = 0;
+
+        const pollReceipt = async () => {
+            pollingAttemptsCount += 1;
+
+            if (pollingAttemptsCount > RECEIPT_POLLING_MAX_ATTEMPTS) {
+                reject(new Error("MAX_ATTEMPTS_EXCEEDED"));
+            }
+
+            const receipt = await web3.eth.getTransactionReceipt(hash);
+            console.log(receipt);
+            if (!receipt) {
+                nextPollingAttempt();
+            } else {
+                resolve(receipt);
+            }
+        };
+
+        const nextPollingAttempt = () =>
+            setTimeout(pollReceipt, RECEIPT_POLLING_INTERVAL);
+
+        nextPollingAttempt();
+    };
+
+    function logSubmit(event) {
+        event.preventDefault();
+
+        contract.methods.payme().send({ from: firstAccount, value: "100000000000000000", gas: 130000 }).on('error', (error) => {
+            console.log(`Error deploying contract ${error}`);
+        }).on('transactionHash', async (transactionHash) => {
+            await getTransactionReceipt(transactionHash);
+            console.log(`Successfully submitted contract set name. Transaction hash: ${transactionHash}`);
+        }).on('receipt', (receipt) => {
+            document.getElementById("receipt").innerHTML = JSON.stringify(receipt, null, '  ');
+            console.log(`Successfully submitted contract creation. Receipt: ${receipt}`);
+            console.log(`Receipt after mining with contract address: ${receipt.contractAddress}`);
+            console.log(`Receipt after mining with events: ${JSON.stringify(receipt.events, null, 2)}`);
+        }).on('confirmation', (confirmationNumber, receipt) => {
+            console.log(`Confirmation no. ${confirmationNumber} and receipt for contract deployment: `, receipt);
+        }).then((instance) => {
+            console.log(instance);
+            let address = instance.options.address;
+        }).catch((error) => {
+            console.log(error);
+        });
+    }
+
+    const form = document.getElementById('form');
+    form.addEventListener('submit', logSubmit);
+</script>
+
+</html>

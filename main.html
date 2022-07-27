@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+
+<body>
+  <h1>Dapp</h1>
+  <h2>Current Account</h2>
+  <p id="account"></p>
+</body>
+<script src="web3.min.js"></script>
+<script>
+  // print hello world
+  console.log("Hello World");
+</script>
+<script>
+  window.ethereum.enable();
+  console.log("Here")
+  var firstAccount;
+  //  get all accounts
+  if (typeof web3 !== 'undefined') {
+    web3 = new Web3(web3.currentProvider);
+    window.ethereum.enable();
+  } else {
+    console.log('No web3? You should consider trying MetaMask!')
+  }
+  web3.eth.getAccounts().then(e => {
+    firstAccount = e[0];
+    console.log("A: " + firstAccount);
+    document.getElementById("account").innerHTML = firstAccount;
+
+  })
+
+  const loadData = async () => {
+    const permissions = await ethereum.request({
+      method: 'wallet_requestPermissions',
+      params: [{
+        eth_accounts: {},
+      }]
+    });
+    let walletAddress = await window.ethereum.request({
+      method: "eth_requestAccounts",
+      params: [
+        {
+          eth_accounts: {}
+        }
+      ]
+    });
+    console.log(walletAddress);
+  }
+  loadData();
+</script>
+
+</html>
