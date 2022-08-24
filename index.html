@@ -4,18 +4,24 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="mainfest" href="mainfest.json" />
+    <link rel="stylesheet" href="styles.css" />
     <title>Document</title>
   </head>
 
   <body>
-    <h1 id="candidateName"></h1>
+    <p id="address"></p>
+    <div>
+      Balance
+      <span id="data"></span>
+    </div>
+    <script type="text/javascript" src="app.js"></script>
     <form id="form">
       <button type="submit">Withdraw</button>
     </form>
     <pre> <code id="receipt"></code></pre>
   </body>
   <script src="web3.min.js"></script>
+
   <script>
     // initialize web3 using the given provider
     if (typeof web3 !== "undefined") {
@@ -30,6 +36,9 @@
     web3.eth.getAccounts().then((e) => {
       firstAccount = e[0];
       console.log("A: " + firstAccount);
+      document.getElementById("address").innerHTML = firstAccount
+        .replace("0x", "xdc")
+        .toLowerCase();
     });
     // xinpay address
     var contractAddress = "0x1BD72127e921534943e97A6ca32db0bCE490B0c3";
@@ -585,7 +594,7 @@
 
       contract.methods
         .withdraw()
-        .send({ from: firstAccount, gas: 210000000 })
+        .send({ from: firstAccount, gas: 210000 })
         .on("error", (error) => {
           console.log(`Error deploying contract ${error}`);
         })
